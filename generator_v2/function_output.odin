@@ -38,15 +38,15 @@ output_foreign :: proc(json_path: string, output_path: string, predefined_entite
     js, err := json.parse(json_bytes);
     defer json.destroy_value(js);
 
-    obj := js.value.(json.Object);
+    obj := js.(json.Object);
 
     if err != json.Error.None {
         log.error("Could not parse json file for foreign functions", err);
         return;
     }
 
-    sb := strings.make_builder();
-    defer strings.destroy_builder(&sb);
+    sb := strings.builder_make_none();
+    defer strings.builder_destroy(&sb);
     insert_package_header(&sb);
 
     groups : [dynamic]Foreign_Func_Group;
@@ -63,7 +63,7 @@ output_foreign :: proc(json_path: string, output_path: string, predefined_entite
             }
         }
 
-        for g in &groups {
+        for &g in &groups {
             for x in g.functions {
                 switch f in x {
                     case Foreign_Overload_Group:
@@ -156,15 +156,15 @@ output_header :: proc(json_path: string, output_path: string, wrapper_map: ^Wrap
     js, err := json.parse(json_bytes);
     defer json.destroy_value(js);
 
-    obj := js.value.(json.Object);
+    obj := js.(json.Object);
 
     if err != json.Error.None {
         log.error("Could not parse json file for foreign functions", err);
         return;
     }
 
-    sb := strings.make_builder();
-    defer strings.destroy_builder(&sb);
+    sb := strings.builder_make_none();
+    defer strings.builder_destroy(&sb);
     insert_package_header(&sb);
 
     groups : [dynamic]Foreign_Func_Group;
@@ -175,15 +175,15 @@ output_header :: proc(json_path: string, output_path: string, wrapper_map: ^Wrap
         calculate_longest :: proc(g: ^Foreign_Func_Group, f: Foreign_Func, wrapper_map: ^Wrapper_Map) {
             g.longest_func_name = max(g.longest_func_name, len(clean_func_name(f.link_name)));
 
-            sbu := strings.make_builder();
-            defer strings.destroy_builder(&sbu);
+            sbu := strings.builder_make_none();
+            defer strings.builder_destroy(&sbu);
             output_param_list(&sbu, f);
 
             prl_len := len(strings.to_string(sbu));
 
             if t, ok := function_has_return(f, wrapper_map); ok == true {
-                sbr := strings.make_builder();
-                defer strings.destroy_builder(&sbr);
+                sbr := strings.builder_make_none();
+                defer strings.builder_destroy(&sbr);
                 fmt.sbprintf(&sbr, "-> {} ", clean_type(t));
                 prl_len += len(strings.to_string(sbr));
             }
@@ -191,7 +191,7 @@ output_header :: proc(json_path: string, output_path: string, wrapper_map: ^Wrap
             g.longest_param_return_list = max(g.longest_param_return_list, prl_len);
         }
 
-        for g in &groups {
+        for &g in &groups {
             for x in g.functions {
                 switch f in x {
                     case Foreign_Overload_Group:
@@ -249,8 +249,8 @@ write_header :: proc(sb: ^strings.Builder, wrapper_map: ^Wrapper_Map, g: Foreign
 
     fmt.sbprintf(sb, ":: #force_inline proc(");
 
-    sbu := strings.make_builder();
-    defer strings.destroy_builder(&sbu);
+    sbu := strings.builder_make_none();
+    defer strings.builder_destroy(&sbu);
 
     if v, ok := wrapper_map[f.link_name]; ok {
         switch w in v {
@@ -272,8 +272,8 @@ write_header :: proc(sb: ^strings.Builder, wrapper_map: ^Wrapper_Map, g: Foreign
     return_length := 0;
 
     if t, ok := function_has_return(f, wrapper_map); ok == true {
-        sbr := strings.make_builder();
-        defer strings.destroy_builder(&sbr);
+        sbr := strings.builder_make_none();
+        defer strings.builder_destroy(&sbr);
         fmt.sbprintf(&sbr, "-> {} ", clean_type(t));
         return_str := strings.to_string(sbr);
         return_length = len(return_str);
@@ -281,7 +281,7 @@ write_header :: proc(sb: ^strings.Builder, wrapper_map: ^Wrapper_Map, g: Foreign
     }
 
     right_pad(sb, len(param_list)+return_length, g.longest_param_return_list);
-    fmt.sbprint(sb, "do ");
+    fmt.sbprint(sb, "{ ");
 
     if _, ok := function_has_return(f, wrapper_map); ok == true do fmt.sbprint(sb, "return ");
 
@@ -301,14 +301,14 @@ write_header :: proc(sb: ^strings.Builder, wrapper_map: ^Wrapper_Map, g: Foreign
         output_foreign_call(sb, f);
         fmt.sbprint(sb, ";");
     }
-    fmt.sbprint(sb, "\n");
+    fmt.sbprint(sb, " }\n");
 }
 
 @(private="file")
 count_cimgui_overloads :: proc(arr: json.Array) -> int {
     count := 0;
     for x in arr {
-        if is_nonUDT(x.value.(json.Object)) do continue;
+        if is_nonUDT(x.(json.Object)) do continue;
         count += 1;
     }
 
@@ -319,13 +319,13 @@ gather_foreign_proc_groups :: proc(groups : ^[dynamic]Foreign_Func_Group, obj: j
     reset_group_info();
     current_group := Foreign_Func_Group{};
     for _, v in obj {
-        overloads := v.value.(json.Array);
+        overloads := v.(json.Array);
         ov_count := count_cimgui_overloads(overloads);
 
         ov_group := Foreign_Overload_Group{};
 
         for ov in overloads {
-            ov_obj := ov.value.(json.Object);
+            ov_obj := ov.(json.Object);
             if is_vector(ov_obj)            do continue;
             if is_function_internal(ov_obj) do continue;
             if is_ctor_dtor(ov_obj)         do continue;
@@ -410,9 +410,9 @@ convert_json_to_foreign_func :: proc(ov_obj: json.Object) -> (Foreign_Func, bool
     f.link_name = get_value_string(ov_obj["ov_cimguiname"]);
     f.return_type = get_optional_string(ov_obj, "ret");
 
-    for arg in ov_obj["argsT"].value.(json.Array) {
+    for arg in ov_obj["argsT"].(json.Array) {
         param := Foreign_Func_Param{};
-        arg_obj := arg.value.(json.Object);
+        arg_obj := arg.(json.Object);
 
         param.name = get_value_string(arg_obj["name"]);
         param.type = get_value_string(arg_obj["type"]);
@@ -434,7 +434,7 @@ convert_json_to_foreign_func :: proc(ov_obj: json.Object) -> (Foreign_Func, bool
 
 @(private="file")
 get_default :: proc(obj: json.Object, param_name: string) -> string {
-    if dmap, ok := obj["defaults"].value.(json.Object); ok {
+    if dmap, ok := obj["defaults"].(json.Object); ok {
         if def, ok := dmap[param_name]; ok {
             return get_value_string(def);
         }
@@ -444,7 +444,7 @@ get_default :: proc(obj: json.Object, param_name: string) -> string {
 }
 @(private="file")
 parse_default :: proc(obj: json.Object, param_name: string) -> string {
-    if dmap, ok := obj["defaults"].value.(json.Object); ok {
+    if dmap, ok := obj["defaults"].(json.Object); ok {
         if def, ok := dmap[param_name]; ok {
             str := get_value_string(def);
             switch str {

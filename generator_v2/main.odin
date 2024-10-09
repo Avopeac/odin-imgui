@@ -4,6 +4,7 @@ import "core:log"
 import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:strconv"
 import "core:encoding/json";
 
 DEFINITION_JSON_PATH       :: "./cimgui/generator/output/definitions.json";
@@ -42,8 +43,8 @@ output_enums :: proc(json_path: string, output_path: string) {
         return;
     }
 
-    sb := strings.make_builder();
-    defer strings.destroy_builder(&sb);
+    sb := strings.builder_make_none();
+    defer strings.builder_destroy(&sb);
     insert_package_header(&sb);
 
     Enum_Defintion :: struct {
@@ -60,26 +61,26 @@ output_enums :: proc(json_path: string, output_path: string) {
     definitions : [dynamic]Enum_Defintion;
     
     { // Gather
-        obj := js.value.(json.Object);
+        obj := js.(json.Object);
         blacklist : map[string]bool;
-        for k, v in obj["locations"].value.(json.Object) {
+        for k, v in obj["locations"].(json.Object) {
             location := get_value_string(v);
             if strings.has_prefix(location, "imgui_internal") do blacklist[k] = true;
         }
 
-        for k, v in obj["enums"].value.(json.Object) {
+        for k, v in obj["enums"].(json.Object) {
             def := Enum_Defintion{};
 
             if _, ok := blacklist[k]; ok do continue;
 
             def.name = k;
             
-            for x in v.value.(json.Array) {
-                field := x.value.(json.Object);
+            for x in v.(json.Array) {
+                field := x.(json.Object);
                 res := Enum_Field{};
                 res.name = get_value_string(field["name"]);
 
-                #partial switch v in field["value"].value {
+                #partial switch v in field["value"] {
                     case json.Integer: {
                         res.value = int(v);
                     }
@@ -102,7 +103,7 @@ output_enums :: proc(json_path: string, output_path: string) {
             append(&definitions, def);
         }
 
-        for def in &definitions {
+        for &def in &definitions {
             for f in def.fields {
                 key := clean_field_key(f.name, def.name);
                 def.longest_field_name = max(def.longest_field_name, len(key));
@@ -180,9 +181,26 @@ output_enums :: proc(json_path: string, output_path: string) {
     clean_field_key :: proc(key: string, enum_name: string) -> string {
         key := key;
         key = strings.trim_space(key);
-        key = key[len(enum_name):];
-        key = strings.trim(key, "_");
-        key = strings.to_pascal_case(key);
+
+        subkeys := strings.split(key, " ")
+        for &subkey in subkeys {
+            if strings.has_prefix( subkey, enum_name ) {
+                subkey = subkey[len(enum_name):]
+            } else {
+                subkey = clean_imgui(subkey);
+            }
+            subkey = strings.trim(subkey, "_");
+            if !strings.contains( subkey, "-" ) {
+                subkey = strings.to_pascal_case(subkey);
+            }
+            if i, is_int := strconv.parse_int(subkey); is_int {
+                sb := strings.builder_make_none();
+                defer strings.builder_destroy(&sb);
+                subkey = strings.clone( fmt.sbprintf(&sb, "_%s", subkey) );
+            }
+        }
+        
+        key = strings.concatenate(subkeys);
         return key;
     }
 }
@@ -199,8 +217,8 @@ output_structs :: proc(json_path: string, output_path: string, predefined_entite
         return;
     }
 
-    sb := strings.make_builder();
-    defer strings.destroy_builder(&sb);
+    sb := strings.builder_make_none();
+    defer strings.builder_destroy(&sb);
     insert_package_header(&sb);
 
     Struct_Definition :: struct {
@@ -220,23 +238,23 @@ output_structs :: proc(json_path: string, output_path: string, predefined_entite
 
     
     { // Gather
-        obj := js.value.(json.Object);
+        obj := js.(json.Object);
         blacklist : map[string]bool;
-        for k, v in obj["locations"].value.(json.Object) {
+        for k, v in obj["locations"].(json.Object) {
             location := get_value_string(v);
             if strings.has_prefix(location, "imgui_internal") do blacklist[k] = true;
             if strings.has_prefix(location, "imstb_textedit") do blacklist[k] = true;
         }
 
-        for k, v in obj["structs"].value.(json.Object) {
+        for k, v in obj["structs"].(json.Object) {
             def := Struct_Definition{};
 
             if _, ok := blacklist[k]; ok do continue;
 
             def.name = k;
 
-            for x in v.value.(json.Array) {
-                field := x.value.(json.Object);
+            for x in v.(json.Array) {
+                field := x.(json.Object);
                 res := Struct_Field{};
 
                 res.size = get_optional_int(field, "size");
@@ -249,7 +267,7 @@ output_structs :: proc(json_path: string, output_path: string, predefined_entite
             append(&definitions, def);
         }
 
-        for def in &definitions {
+        for &def in &definitions {
             for f in def.fields {
                 key := clean_field_key(f.name, f.size);
                 def.longest_field_name = max(def.longest_field_name, len(key));

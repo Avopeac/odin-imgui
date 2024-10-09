@@ -4,11 +4,11 @@ import "core:strings";
 import "core:fmt";
 import "core:strconv";
 
-insert_package_header :: proc(sb: ^strings.Builder) do fmt.sbprint(sb, "package imgui;\n\n");
+insert_package_header :: proc(sb: ^strings.Builder) { fmt.sbprint(sb, "package imgui;\n\n"); }
 
 right_pad :: proc(sb: ^strings.Builder, current: int, desired: int) {
     if desired-current <= 0 do return;
-    for _ in 0..(desired-current)-1 do fmt.sbprint(sb, " ");
+    for _ in 0..=(desired-current)-1 do fmt.sbprint(sb, " ");
 }
 
 name_type_map := map[string]string {
@@ -46,6 +46,7 @@ type_map := map[string]string {
     "ImS8"   = "i8",
     "ImU8"   = "u8",
     "ImS16"  = "i16",
+    "ImU16"  = "u16",
     "ImU64"  = "u64",
 
     "ImTextureID" = "Texture_ID",
@@ -94,6 +95,7 @@ type_map := map[string]string {
     "ImVector_float"                 = "Im_Vector(f32)",
     "ImVector_char"                  = "Im_Vector(u8)",
     "ImVector_unsigned_char"         = "Im_Vector(u8)",
+    "ImVector_ImGuiSelectionRequest" = "Im_Vector(Selection_Request)",
 
     "ImGuiIO" = "IO",
 };
@@ -135,16 +137,16 @@ clean_type :: proc(type: string) -> string {
     }
 
     if size > 0 {
-        sb := strings.make_builder();
-        defer strings.destroy_builder(&sb);
+        sb := strings.builder_make_none();
+        defer strings.builder_destroy(&sb);
         fmt.sbprintf(&sb, "[{}]{}", size, t);
         t = strings.to_string(sb);
     }
 
     if count > 0 {
-        sb := strings.make_builder();
-        defer strings.destroy_builder(&sb);
-        for _ in 0..count-1 {
+        sb := strings.builder_make_none();
+        defer strings.builder_destroy(&sb);
+        for _ in 0..=count-1 {
             fmt.sbprint(&sb, '^');
         }
         fmt.sbprint(&sb, t);

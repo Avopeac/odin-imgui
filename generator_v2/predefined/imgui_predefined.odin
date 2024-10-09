@@ -9,6 +9,8 @@ package predefined;
 @output_copy Wchar32 :: distinct u32; 
 @output_copy Texture_ID :: distinct rawptr; 
 @output_copy File_Handle :: distinct uintptr; 
+@output_copy Selection_User_Data :: distinct i64;
+@output_copy Key_Chord :: distinct i32;
 
 //@output_copy Draw_Callback_ResetRenderState :: imgui.Draw_Callback(~uintptr(0)); 
 
@@ -66,6 +68,39 @@ Storage_Pair :: struct {
         val_f: f32, 
         val_p: rawptr,
     },
+}
+
+@(struct_overwrite="ImGuiStorage")
+Storage :: struct {
+    data: Im_Vector( Storage_Pair ),
+};
+
+@(struct_overwrite="ImGuiSelectionBasicStorage")
+Selection_Basic_Storage :: struct {
+    size : i32,
+    preserve_order: bool,
+    user_data: rawptr,
+    adapter_index_to_storage_id: proc(self: ^Selection_Basic_Storage, idx: i32 ) -> ImID,
+    _selection_order: i32,
+    _storage: Storage
+}
+
+@(struct_overwrite="ImGuiSelectionExternalStorage")
+Selection_External_Storage :: struct {
+    user_data: rawptr,
+    adapter_set_item_selected: proc(self: ^Selection_External_Storage, idx: i32, selected: bool)
+}
+
+@(struct_overwrite="ImGuiPlatformIO")
+Platform_Io :: struct {
+   platform_get_clipboard_text_fn: proc(ctx: ^Context),
+   platform_set_clipboard_text_fn: proc(ctx: ^Context, text: cstring),
+   platform_clipboard_user_data: proc(),
+   platform_open_in_shell_fn: proc(ctx: ^Context, path: cstring),
+   platform_open_in_shell_user_data: proc(),
+   platform_set_ime_data_fn: proc(ctx: ^Context, viewport: ^Viewport, data : ^Platform_Ime_Data),
+   platform_ime_user_data: proc(),
+   platform_locale_decimal_point: Wchar,
 }
 
 ///////////////////////////
@@ -182,14 +217,6 @@ wrapper_combo_str_arr :: proc(label: string, current_item: ^i32, items: []string
 
     return igCombo_Str_arr(l, current_item, &data[0], i32(len(items)), popup_max_height_in_items);
 }
-
-// @(wrapper="igTextEx") 
-// wrapper_text_ex :: proc(text: string, flags := Text_Flags(0)) {
-//     t := strings.clone_to_cstring(text, context.temp_allocator);
-//     ptr := transmute(^u8)t;
-//     end_ptr := mem.ptr_offset(ptr, len(t));
-//     igTextEx(cstring(ptr), cstring(end_ptr), flags);
-// }
 
 @(wrapper="igTextWrapped") 
 wrapper_text_wrapped :: proc(fmt_: string, args: ..any) {

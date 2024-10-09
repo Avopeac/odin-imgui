@@ -14,6 +14,10 @@ Texture_ID :: distinct rawptr;
 
 File_Handle :: distinct uintptr;
 
+Selection_User_Data :: distinct i64;
+
+Key_Chord :: distinct i32;
+
 Alloc_Func :: #type proc "c" (size: i64, user_data: rawptr) -> rawptr;
 
 Free_Func :: #type proc "c" (ptr: rawptr, user_data: rawptr);
@@ -43,4 +47,5 @@ Im_Vector :: struct(T : typeid) {
     capacity: i32,
     data:     ^T,
 }
+
 
