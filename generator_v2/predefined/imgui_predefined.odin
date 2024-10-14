@@ -12,8 +12,6 @@ package predefined;
 @output_copy Selection_User_Data :: distinct i64;
 @output_copy Key_Chord :: distinct i32;
 
-//@output_copy Draw_Callback_ResetRenderState :: imgui.Draw_Callback(~uintptr(0)); 
-
 @output_copy Alloc_Func :: #type proc "c" (size: i64, user_data: rawptr) -> rawptr;
 @output_copy Free_Func :: #type proc "c" (ptr: rawptr, user_data: rawptr);
 @output_copy Mem_Alloc_Func :: #type proc "c" (size: i64, user_data: rawptr) -> rawptr;
@@ -23,6 +21,7 @@ package predefined;
 @output_copy Draw_Callback :: #type proc "c" (parent_list: ^Draw_List, cmd: ^Draw_Cmd);
 @output_copy Input_Text_Callback :: #type proc "c" (data: ^Input_Text_Callback_Data) -> int;
 @output_copy Size_Callback :: #type proc "c" (data: ^Size_Callback_Data);
+@output_copy Draw_Callback_ResetRenderState :: #type proc "c" (parent_list: ^Draw_List, cmd: ^Draw_Cmd);
 
 // ///////////////////////////
 // // Predefined structs

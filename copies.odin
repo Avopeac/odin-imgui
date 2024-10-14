@@ -36,6 +36,8 @@ Input_Text_Callback :: #type proc "c" (data: ^Input_Text_Callback_Data) -> int;
 
 Size_Callback :: #type proc "c" (data: ^Size_Callback_Data);
 
+Draw_Callback_ResetRenderState :: #type proc "c" (parent_list: ^Draw_List, cmd: ^Draw_Cmd);
+
 Draw_List_Shared_Data :: struct {};
 
 Context :: struct {};

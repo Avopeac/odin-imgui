@@ -1,37 +1,120 @@
 package imgui;
 
-//ImDrawCmdHeader 
-Draw_Cmd_Header :: struct {
-	clip_rect:  Vec4,
-	texture_id: Texture_ID,
-	vtx_offset: u32,
+//ImFontGlyphRangesBuilder 
+Font_Glyph_Ranges_Builder :: struct {
+	used_chars: Im_Vector(u32),
 }
 
-//ImGuiPlatformImeData 
-Platform_Ime_Data :: struct {
-	want_visible:      bool,
-	input_pos:         Vec2,
-	input_line_height: f32,
+Selection_Basic_Storage :: struct {
+    size : i32,
+    preserve_order: bool,
+    user_data: rawptr,
+    adapter_index_to_storage_id: proc(self: ^Selection_Basic_Storage, idx: i32 ) -> ImID,
+    _selection_order: i32,
+    _storage: Storage
 }
 
-//ImGuiSelectionRequest 
-Selection_Request :: struct {
-	type:             Selection_Request_Type,
-	selected:         bool,
-	range_direction:  i8,
-	range_first_item: Selection_User_Data,
-	range_last_item:  Selection_User_Data,
+
+//ImGuiOnceUponAFrame 
+Once_Upon_Aframe :: struct {
+	ref_frame: i32,
 }
 
-//ImGuiMultiSelectIO 
-Multi_Select_Io :: struct {
-	requests:        Im_Vector(Selection_Request),
-	range_src_item:  Selection_User_Data,
-	nav_id_item:     Selection_User_Data,
-	nav_id_selected: bool,
-	range_src_reset: bool,
-	items_count:     i32,
+//ImFontConfig 
+Font_Config :: struct {
+	font_data:                rawptr,
+	font_data_size:           i32,
+	font_data_owned_by_atlas: bool,
+	font_no:                  i32,
+	size_pixels:              f32,
+	oversample_h:             i32,
+	oversample_v:             i32,
+	pixel_snap_h:             bool,
+	glyph_extra_spacing:      Vec2,
+	glyph_offset:             Vec2,
+	glyph_ranges:             ^Wchar,
+	glyph_min_advance_x:      f32,
+	glyph_max_advance_x:      f32,
+	merge_mode:               bool,
+	font_builder_flags:       u32,
+	rasterizer_multiply:      f32,
+	rasterizer_density:       f32,
+	ellipsis_char:            Wchar,
+	name:                     [40]i8,
+	dst_font:                 ^ImFont,
 }
+
+//ImVec4 
+Vec4 :: struct {
+	x: f32,
+	y: f32,
+	z: f32,
+	w: f32,
+}
+
+//ImFontAtlas 
+Font_Atlas :: struct {
+	flags:                 Font_Atlas_Flags,
+	tex_id:                Texture_ID,
+	tex_desired_width:     i32,
+	tex_glyph_padding:     i32,
+	locked:                bool,
+	user_data:             rawptr,
+	tex_ready:             bool,
+	tex_pixels_use_colors: bool,
+	tex_pixels_alpha8:     ^u8,
+	tex_pixels_rgba32:     ^u32,
+	tex_width:             i32,
+	tex_height:            i32,
+	tex_uv_scale:          Vec2,
+	tex_uv_white_pixel:    Vec2,
+	fonts:                 Im_Vector(^ImFont),
+	custom_rects:          Im_Vector(Font_Atlas_Custom_Rect),
+	config_data:           Im_Vector(Font_Config),
+	tex_uv_lines:          [64]Vec4,
+	font_builder_io:       ^Font_Builder_Io,
+	font_builder_flags:    u32,
+	pack_id_mouse_cursors: i32,
+	pack_id_lines:         i32,
+}
+
+//ImColor 
+Color :: struct {
+	value: Vec4,
+}
+
+//ImGuiTableColumnSortSpecs 
+Table_Column_Sort_Specs :: struct {
+	column_user_id: ImID,
+	column_index:   i16,
+	sort_order:     i16,
+	sort_direction: Sort_Direction,
+}
+
+//ImGuiPayload 
+Payload :: struct {
+	data:             rawptr,
+	data_size:        i32,
+	source_id:        ImID,
+	source_parent_id: ImID,
+	data_frame_count: i32,
+	data_type:        [33]i8,
+	preview:          bool,
+	delivery:         bool,
+}
+
+//ImGuiTableSortSpecs 
+Table_Sort_Specs :: struct {
+	specs:       ^Table_Column_Sort_Specs,
+	specs_count: i32,
+	specs_dirty: bool,
+}
+
+Selection_External_Storage :: struct {
+    user_data: rawptr,
+    adapter_set_item_selected: proc(self: ^Selection_External_Storage, idx: i32, selected: bool)
+}
+
 
 //ImFont 
 ImFont :: struct {
@@ -57,6 +140,26 @@ ImFont :: struct {
 	used4k_pages_map:      [2]u8,
 }
 
+//ImDrawListSplitter 
+Draw_List_Splitter :: struct {
+	_current:  i32,
+	_count:    i32,
+	_channels: Im_Vector(Draw_Channel),
+}
+
+//ImDrawData 
+Draw_Data :: struct {
+	valid:             bool,
+	cmd_lists_count:   i32,
+	total_idx_count:   i32,
+	total_vtx_count:   i32,
+	cmd_lists:         Im_Vector(^Draw_List),
+	display_pos:       Vec2,
+	display_size:      Vec2,
+	framebuffer_scale: Vec2,
+	owner_viewport:    ^Viewport,
+}
+
 //ImDrawList 
 Draw_List :: struct {
 	cmd_buffer:        Im_Vector(Draw_Cmd),
@@ -76,33 +179,157 @@ Draw_List :: struct {
 	_owner_name:       cstring,
 }
 
-Platform_Io :: struct {
-   platform_get_clipboard_text_fn: proc(ctx: ^Context),
-   platform_set_clipboard_text_fn: proc(ctx: ^Context, text: cstring),
-   platform_clipboard_user_data: proc(),
-   platform_open_in_shell_fn: proc(ctx: ^Context, path: cstring),
-   platform_open_in_shell_user_data: proc(),
-   platform_set_ime_data_fn: proc(ctx: ^Context, viewport: ^Viewport, data : ^Platform_Ime_Data),
-   platform_ime_user_data: proc(),
-   platform_locale_decimal_point: Wchar,
+//ImGuiPlatformImeData 
+Platform_Ime_Data :: struct {
+	want_visible:      bool,
+	input_pos:         Vec2,
+	input_line_height: f32,
 }
 
+//ImGuiViewport 
+Viewport :: struct {
+	id:                  ImID,
+	flags:               Viewport_Flags,
+	pos:                 Vec2,
+	size:                Vec2,
+	work_pos:            Vec2,
+	work_size:           Vec2,
+	platform_handle:     rawptr,
+	platform_handle_raw: rawptr,
+}
 
-//ImGuiInputTextCallbackData 
-Input_Text_Callback_Data :: struct {
-	ctx:             ^Context,
-	event_flag:      Input_Text_Flags,
-	flags:           Input_Text_Flags,
-	user_data:       rawptr,
-	event_char:      Wchar,
-	event_key:       Key,
-	buf:             cstring,
-	buf_text_len:    i32,
-	buf_size:        i32,
-	buf_dirty:       bool,
-	cursor_pos:      i32,
-	selection_start: i32,
-	selection_end:   i32,
+//ImDrawCmdHeader 
+Draw_Cmd_Header :: struct {
+	clip_rect:  Vec4,
+	texture_id: Texture_ID,
+	vtx_offset: u32,
+}
+
+//ImGuiListClipper 
+List_Clipper :: struct {
+	ctx:                 ^Context,
+	display_start:       i32,
+	display_end:         i32,
+	items_count:         i32,
+	items_height:        f32,
+	start_pos_y:         f32,
+	start_seek_offset_y: f64,
+	temp_data:           rawptr,
+}
+
+//ImGuiTextRange 
+Text_Range :: struct {
+	b: cstring,
+	e: cstring,
+}
+
+Storage :: struct {
+    data: Im_Vector( Storage_Pair ),
+};
+
+//ImGuiStyle 
+Style :: struct {
+	alpha:                           f32,
+	disabled_alpha:                  f32,
+	window_padding:                  Vec2,
+	window_rounding:                 f32,
+	window_border_size:              f32,
+	window_min_size:                 Vec2,
+	window_title_align:              Vec2,
+	window_menu_button_position:     Dir,
+	child_rounding:                  f32,
+	child_border_size:               f32,
+	popup_rounding:                  f32,
+	popup_border_size:               f32,
+	frame_padding:                   Vec2,
+	frame_rounding:                  f32,
+	frame_border_size:               f32,
+	item_spacing:                    Vec2,
+	item_inner_spacing:              Vec2,
+	cell_padding:                    Vec2,
+	touch_extra_padding:             Vec2,
+	indent_spacing:                  f32,
+	columns_min_spacing:             f32,
+	scrollbar_size:                  f32,
+	scrollbar_rounding:              f32,
+	grab_min_size:                   f32,
+	grab_rounding:                   f32,
+	log_slider_deadzone:             f32,
+	tab_rounding:                    f32,
+	tab_border_size:                 f32,
+	tab_min_width_for_close_button:  f32,
+	tab_bar_border_size:             f32,
+	tab_bar_overline_size:           f32,
+	table_angled_headers_angle:      f32,
+	table_angled_headers_text_align: Vec2,
+	color_button_position:           Dir,
+	button_text_align:               Vec2,
+	selectable_text_align:           Vec2,
+	separator_text_border_size:      f32,
+	separator_text_align:            Vec2,
+	separator_text_padding:          Vec2,
+	display_window_padding:          Vec2,
+	display_safe_area_padding:       Vec2,
+	mouse_cursor_scale:              f32,
+	anti_aliased_lines:              bool,
+	anti_aliased_lines_use_tex:      bool,
+	anti_aliased_fill:               bool,
+	curve_tessellation_tol:          f32,
+	circle_tessellation_max_error:   f32,
+	colors:                          [56]Vec4,
+	hover_stationary_delay:          f32,
+	hover_delay_short:               f32,
+	hover_delay_normal:              f32,
+	hover_flags_for_tooltip_mouse:   Hovered_Flags,
+	hover_flags_for_tooltip_nav:     Hovered_Flags,
+}
+
+//ImGuiTextBuffer 
+Text_Buffer :: struct {
+	buf: Im_Vector(u8),
+}
+
+//ImDrawCmd 
+Draw_Cmd :: struct {
+	clip_rect:          Vec4,
+	texture_id:         Texture_ID,
+	vtx_offset:         u32,
+	idx_offset:         u32,
+	elem_count:         u32,
+	user_callback:      Draw_Callback,
+	user_callback_data: rawptr,
+}
+
+//ImGuiTextFilter 
+Text_Filter :: struct {
+	input_buf:  [256]i8,
+	filters:    Im_Vector(Text_Range),
+	count_grep: i32,
+}
+
+//ImFontGlyph 
+Font_Glyph :: struct {
+	colored:   u32,
+	visible:   u32,
+	codepoint: u32,
+	advance_x: f32,
+	x0:        f32,
+	y0:        f32,
+	x1:        f32,
+	y1:        f32,
+	u0:        f32,
+	v0:        f32,
+	u1:        f32,
+	v1:        f32,
+}
+
+//ImGuiSelectionRequest 
+Selection_Request :: struct {
+	type:             Selection_Request_Type,
+	selected:         bool,
+	range_direction:  i8,
+	range_first_item: Selection_User_Data,
+	range_last_item:  Selection_User_Data,
 }
 
 //ImGuiIO 
@@ -201,74 +428,70 @@ IO :: struct {
 	input_queue_characters:                  Im_Vector(Wchar),
 }
 
-Selection_External_Storage :: struct {
-    user_data: rawptr,
-    adapter_set_item_selected: proc(self: ^Selection_External_Storage, idx: i32, selected: bool)
-}
-
-
-//ImGuiTextBuffer 
-Text_Buffer :: struct {
-	buf: Im_Vector(u8),
-}
-
-Selection_Basic_Storage :: struct {
-    size : i32,
-    preserve_order: bool,
-    user_data: rawptr,
-    adapter_index_to_storage_id: proc(self: ^Selection_Basic_Storage, idx: i32 ) -> ImID,
-    _selection_order: i32,
-    _storage: Storage
-}
-
-
-//ImDrawListSplitter 
-Draw_List_Splitter :: struct {
-	_current:  i32,
-	_count:    i32,
-	_channels: Im_Vector(Draw_Channel),
-}
-
-//ImGuiTextFilter 
-Text_Filter :: struct {
-	input_buf:  [256]i8,
-	filters:    Im_Vector(Text_Range),
-	count_grep: i32,
-}
-
-//ImGuiPayload 
-Payload :: struct {
-	data:             rawptr,
-	data_size:        i32,
-	source_id:        ImID,
-	source_parent_id: ImID,
-	data_frame_count: i32,
-	data_type:        [33]i8,
-	preview:          bool,
-	delivery:         bool,
-}
-
-//ImFontAtlasCustomRect 
-Font_Atlas_Custom_Rect :: struct {
-	width:           u16,
-	height:          u16,
-	x:               u16,
-	y:               u16,
-	glyph_id:        u32,
-	glyph_advance_x: f32,
-	glyph_offset:    Vec2,
-	font:            ^ImFont,
-}
-
-//ImFontGlyphRangesBuilder 
-Font_Glyph_Ranges_Builder :: struct {
-	used_chars: Im_Vector(u32),
+//ImDrawVert 
+Draw_Vert :: struct {
+	pos: Vec2,
+	uv:  Vec2,
+	col: u32,
 }
 
 //ImDrawChannel 
 Draw_Channel :: struct {
 	_cmd_buffer: Im_Vector(Draw_Cmd),
 	_idx_buffer: Im_Vector(Draw_Idx),
+}
+
+Platform_Io :: struct {
+   platform_get_clipboard_text_fn: proc(ctx: ^Context),
+   platform_set_clipboard_text_fn: proc(ctx: ^Context, text: cstring),
+   platform_clipboard_user_data: proc(),
+   platform_open_in_shell_fn: proc(ctx: ^Context, path: cstring),
+   platform_open_in_shell_user_data: proc(),
+   platform_set_ime_data_fn: proc(ctx: ^Context, viewport: ^Viewport, data : ^Platform_Ime_Data),
+   platform_ime_user_data: proc(),
+   platform_locale_decimal_point: Wchar,
+}
+
+
+//ImGuiMultiSelectIO 
+Multi_Select_Io :: struct {
+	requests:        Im_Vector(Selection_Request),
+	range_src_item:  Selection_User_Data,
+	nav_id_item:     Selection_User_Data,
+	nav_id_selected: bool,
+	range_src_reset: bool,
+	items_count:     i32,
+}
+
+//ImGuiInputTextCallbackData 
+Input_Text_Callback_Data :: struct {
+	ctx:             ^Context,
+	event_flag:      Input_Text_Flags,
+	flags:           Input_Text_Flags,
+	user_data:       rawptr,
+	event_char:      Wchar,
+	event_key:       Key,
+	buf:             cstring,
+	buf_text_len:    i32,
+	buf_size:        i32,
+	buf_dirty:       bool,
+	cursor_pos:      i32,
+	selection_start: i32,
+	selection_end:   i32,
+}
+
+//ImVec2 
+Vec2 :: struct {
+	x: f32,
+	y: f32,
+}
+
+//ImGuiKeyData 
+Key_Data :: struct {
+	down:               bool,
+	down_duration:      f32,
+	down_duration_prev: f32,
+	analog_value:       f32,
 }
 
 Storage_Pair :: struct {
@@ -281,221 +504,6 @@ Storage_Pair :: struct {
 }
 
 
-//ImGuiKeyData 
-Key_Data :: struct {
-	down:               bool,
-	down_duration:      f32,
-	down_duration_prev: f32,
-	analog_value:       f32,
-}
-
-//ImGuiStyle 
-Style :: struct {
-	alpha:                           f32,
-	disabled_alpha:                  f32,
-	window_padding:                  Vec2,
-	window_rounding:                 f32,
-	window_border_size:              f32,
-	window_min_size:                 Vec2,
-	window_title_align:              Vec2,
-	window_menu_button_position:     Dir,
-	child_rounding:                  f32,
-	child_border_size:               f32,
-	popup_rounding:                  f32,
-	popup_border_size:               f32,
-	frame_padding:                   Vec2,
-	frame_rounding:                  f32,
-	frame_border_size:               f32,
-	item_spacing:                    Vec2,
-	item_inner_spacing:              Vec2,
-	cell_padding:                    Vec2,
-	touch_extra_padding:             Vec2,
-	indent_spacing:                  f32,
-	columns_min_spacing:             f32,
-	scrollbar_size:                  f32,
-	scrollbar_rounding:              f32,
-	grab_min_size:                   f32,
-	grab_rounding:                   f32,
-	log_slider_deadzone:             f32,
-	tab_rounding:                    f32,
-	tab_border_size:                 f32,
-	tab_min_width_for_close_button:  f32,
-	tab_bar_border_size:             f32,
-	tab_bar_overline_size:           f32,
-	table_angled_headers_angle:      f32,
-	table_angled_headers_text_align: Vec2,
-	color_button_position:           Dir,
-	button_text_align:               Vec2,
-	selectable_text_align:           Vec2,
-	separator_text_border_size:      f32,
-	separator_text_align:            Vec2,
-	separator_text_padding:          Vec2,
-	display_window_padding:          Vec2,
-	display_safe_area_padding:       Vec2,
-	mouse_cursor_scale:              f32,
-	anti_aliased_lines:              bool,
-	anti_aliased_lines_use_tex:      bool,
-	anti_aliased_fill:               bool,
-	curve_tessellation_tol:          f32,
-	circle_tessellation_max_error:   f32,
-	colors:                          [56]Vec4,
-	hover_stationary_delay:          f32,
-	hover_delay_short:               f32,
-	hover_delay_normal:              f32,
-	hover_flags_for_tooltip_mouse:   Hovered_Flags,
-	hover_flags_for_tooltip_nav:     Hovered_Flags,
-}
-
-//ImVec2 
-Vec2 :: struct {
-	x: f32,
-	y: f32,
-}
-
-//ImColor 
-Color :: struct {
-	value: Vec4,
-}
-
-//ImGuiTableSortSpecs 
-Table_Sort_Specs :: struct {
-	specs:       ^Table_Column_Sort_Specs,
-	specs_count: i32,
-	specs_dirty: bool,
-}
-
-//ImFontAtlas 
-Font_Atlas :: struct {
-	flags:                 Font_Atlas_Flags,
-	tex_id:                Texture_ID,
-	tex_desired_width:     i32,
-	tex_glyph_padding:     i32,
-	locked:                bool,
-	user_data:             rawptr,
-	tex_ready:             bool,
-	tex_pixels_use_colors: bool,
-	tex_pixels_alpha8:     ^u8,
-	tex_pixels_rgba32:     ^u32,
-	tex_width:             i32,
-	tex_height:            i32,
-	tex_uv_scale:          Vec2,
-	tex_uv_white_pixel:    Vec2,
-	fonts:                 Im_Vector(^ImFont),
-	custom_rects:          Im_Vector(Font_Atlas_Custom_Rect),
-	config_data:           Im_Vector(Font_Config),
-	tex_uv_lines:          [64]Vec4,
-	font_builder_io:       ^Font_Builder_Io,
-	font_builder_flags:    u32,
-	pack_id_mouse_cursors: i32,
-	pack_id_lines:         i32,
-}
-
-//ImFontGlyph 
-Font_Glyph :: struct {
-	colored:   u32,
-	visible:   u32,
-	codepoint: u32,
-	advance_x: f32,
-	x0:        f32,
-	y0:        f32,
-	x1:        f32,
-	y1:        f32,
-	u0:        f32,
-	v0:        f32,
-	u1:        f32,
-	v1:        f32,
-}
-
-//ImFontConfig 
-Font_Config :: struct {
-	font_data:                rawptr,
-	font_data_size:           i32,
-	font_data_owned_by_atlas: bool,
-	font_no:                  i32,
-	size_pixels:              f32,
-	oversample_h:             i32,
-	oversample_v:             i32,
-	pixel_snap_h:             bool,
-	glyph_extra_spacing:      Vec2,
-	glyph_offset:             Vec2,
-	glyph_ranges:             ^Wchar,
-	glyph_min_advance_x:      f32,
-	glyph_max_advance_x:      f32,
-	merge_mode:               bool,
-	font_builder_flags:       u32,
-	rasterizer_multiply:      f32,
-	rasterizer_density:       f32,
-	ellipsis_char:            Wchar,
-	name:                     [40]i8,
-	dst_font:                 ^ImFont,
-}
-
-//ImGuiViewport 
-Viewport :: struct {
-	id:                  ImID,
-	flags:               Viewport_Flags,
-	pos:                 Vec2,
-	size:                Vec2,
-	work_pos:            Vec2,
-	work_size:           Vec2,
-	platform_handle:     rawptr,
-	platform_handle_raw: rawptr,
-}
-
-Storage :: struct {
-    data: Im_Vector( Storage_Pair ),
-};
-
-//ImGuiTextRange 
-Text_Range :: struct {
-	b: cstring,
-	e: cstring,
-}
-
-//ImGuiOnceUponAFrame 
-Once_Upon_Aframe :: struct {
-	ref_frame: i32,
-}
-
-//ImGuiTableColumnSortSpecs 
-Table_Column_Sort_Specs :: struct {
-	column_user_id: ImID,
-	column_index:   i16,
-	sort_order:     i16,
-	sort_direction: Sort_Direction,
-}
-
-//ImDrawData 
-Draw_Data :: struct {
-	valid:             bool,
-	cmd_lists_count:   i32,
-	total_idx_count:   i32,
-	total_vtx_count:   i32,
-	cmd_lists:         Im_Vector(^Draw_List),
-	display_pos:       Vec2,
-	display_size:      Vec2,
-	framebuffer_scale: Vec2,
-	owner_viewport:    ^Viewport,
-}
-
-//ImDrawVert 
-Draw_Vert :: struct {
-	pos: Vec2,
-	uv:  Vec2,
-	col: u32,
-}
-
-//ImDrawCmd 
-Draw_Cmd :: struct {
-	clip_rect:          Vec4,
-	texture_id:         Texture_ID,
-	vtx_offset:         u32,
-	idx_offset:         u32,
-	elem_count:         u32,
-	user_callback:      Draw_Callback,
-	user_callback_data: rawptr,
-}
-
 //ImGuiSizeCallbackData 
 Size_Callback_Data :: struct {
 	user_data:    rawptr,
@@ -504,23 +512,15 @@ Size_Callback_Data :: struct {
 	desired_size: Vec2,
 }
 
-//ImVec4 
-Vec4 :: struct {
-	x: f32,
-	y: f32,
-	z: f32,
-	w: f32,
-}
-
-//ImGuiListClipper 
-List_Clipper :: struct {
-	ctx:                 ^Context,
-	display_start:       i32,
-	display_end:         i32,
-	items_count:         i32,
-	items_height:        f32,
-	start_pos_y:         f32,
-	start_seek_offset_y: f64,
-	temp_data:           rawptr,
+//ImFontAtlasCustomRect 
+Font_Atlas_Custom_Rect :: struct {
+	width:           u16,
+	height:          u16,
+	x:               u16,
+	y:               u16,
+	glyph_id:        u32,
+	glyph_advance_x: f32,
+	glyph_offset:    Vec2,
+	font:            ^ImFont,
 }
 
